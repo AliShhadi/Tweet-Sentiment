@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Redirecting...</title>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script type="text/javascript">
+            //function to get the oauth verifier from the URL
+            function get_oauth_verifier() {
+                const queryString = window.location.search;
+                const urlParams = new URLSearchParams(queryString);
+                const oauth_verifier = urlParams.get('oauth_verifier');
+                return oauth_verifier;
+            }
+
+            //function to send send oauth verifier to server to use it
+            function send_oauth_verifier(oauth_verifier) {
+                $.ajax({
+                    url: "http://localhost:5000/get_oauth_verifier",
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(oauth_verifier),
+                    success: function (data, textStatus, jQxhr) {
+                        var keys = data.split("////");
+                        if (typeof (Storage) !== "undefined") {
+                            localStorage.setItem('key1', keys[0]);
+                            localStorage.setItem('secret', keys[1]);
+                            localStorage.setItem('firstTime', 0);
+                            window.close();
+                        }
+                    },
+                    error: function (jqXhr, textStatus, errorThrown) {
+
+                    },
+                    timeout: 5000
+                });
+            }
+
+            $(document).ready(function () {
+                send_oauth_verifier(get_oauth_verifier());
+            });
+        </script>
+    </head>
+    <body>
+        <h3>Redirecting... Please wait.</h3>
+        <h3>If it did not close automatically within few seconds, please close the current tab manually</h3>
+    </body>
+</html>

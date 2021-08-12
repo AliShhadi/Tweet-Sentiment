@@ -1,0 +1,141 @@
+@import url(https://fonts.googleapis.com/css?family=Open+Sans);
+
+body { 
+    font-family: 'Helvetica';
+    background: #000;
+    color: #fff;
+    font-size: 15px;
+    letter-spacing:1.4px;
+
+}
+
+.mainNodes { 
+    margin: auto;
+    text-align: center;
+    width: 40%;
+    display: none;
+}
+
+.mainNodes h1 { color: #fff; text-shadow: 0 0 10px rgba(0,0,0,0.3); letter-spacing:1px;}
+
+input { 
+    width: 84%; 
+    margin-bottom: 10px; 
+    background: rgba(0,0,0,0.3);
+    border: none;
+    outline: none;
+    padding: 10px;
+    font-size: 15px;
+    color: #fff;
+    text-shadow: 1px 1px 1px rgba(0,0,0,0.3);
+    border: 1px solid rgba(0,0,0,0.3);
+    border-radius: 4px;
+    box-shadow: inset 0 -5px 45px rgba(100,100,100,0.2), 0 1px 1px rgba(255,255,255,0.2);
+    -webkit-transition: box-shadow .5s ease;
+    -moz-transition: box-shadow .5s ease;
+    -o-transition: box-shadow .5s ease;
+    -ms-transition: box-shadow .5s ease;
+    transition: box-shadow .5s ease;
+}
+
+.customButtons {
+    font-weight: bold;
+    color: white;
+    font-size: 16px;
+    height: 35px;
+    border-radius: 8px;
+    border-color: rgba(40, 170, 225, 255);
+    background-color: rgba(40, 170, 225, 255);	
+    cursor: pointer;
+}
+
+.errorMessageDiv{
+    width: 95%;
+    margin: auto;
+    text-align: center;
+    visibility: hidden;
+}
+
+table, th, td {
+    border: 1px solid white;
+    border-collapse: collapse;
+}
+.number, .date, .sentiment{
+    text-align: center;
+}
+.sentiment{
+    font-weight: bold;
+}
+.tweet{
+    padding-left: 1%;
+    padding-top: 8px;
+    padding-bottom: 8px;
+}
+.output{
+    width: 95%;
+    margin: auto;
+}
+.tweetNumberHeader{
+    width: 2%;
+    display: none;
+    padding-top: 1%;
+    padding-bottom: 1%;
+}
+.tweetsDateHeader{
+    width: 14%;
+    display: none;
+    padding-top: 1%;
+    padding-bottom: 1%;
+}
+.tweetsHeader{
+    width: 72%;
+    display: none;
+    padding-top: 1%;
+    padding-bottom: 1%;
+}
+.sentimentsHeader{
+    width: 12%;
+    display: none;
+    padding-top: 1%;
+    padding-bottom: 1%;
+}
+
+.loader {
+    border: 10px solid #f3f3f3;
+    border-radius: 50%;
+    border-top: 10px solid blue;
+    width: 40px;
+    height: 40px;
+    -webkit-animation: spin 2s linear infinite;
+    animation: spin 2s linear infinite;
+    margin: auto;
+    text-align: center;
+    display: none;
+}
+
+@-webkit-keyframes spin {
+    0% { -webkit-transform: rotate(0deg); }
+    100% { -webkit-transform: rotate(360deg); }
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.login { 
+    margin: auto;
+    text-align: center;
+    width: 40%;
+}
+
+.loginButton{
+    width: 300px;
+    height: 45px;
+    color: white;
+    font-size: 16px;
+    margin-top: 10px;
+    border-radius: 30px;
+    border-color: rgba(40, 170, 225, 255);
+    background-color: rgba(40, 170, 225, 255);
+}

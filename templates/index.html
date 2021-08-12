@@ -1,0 +1,321 @@
+<!DOCTYPE html> 
+<html >
+    <head>
+        <meta charset="UTF-8">
+        <title>Tweets sentiment analysis</title>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <link href='https://fonts.googleapis.com/css?family=Pacifico' rel='stylesheet' type='text/css'>
+        <link href='https://fonts.googleapis.com/css?family=Arimo' rel='stylesheet' type='text/css'>
+        <link href='https://fonts.googleapis.com/css?family=Hind:300' rel='stylesheet' type='text/css'>
+        <link href='https://fonts.googleapis.com/css?family=Open+Sans+Condensed:300' rel='stylesheet' type='text/css'>
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+        <script type="text/javascript">
+        var englishTweetsIndexes = [];
+
+        // function to redirect and sign in (Authorize)
+        function redirectAndSignin() {
+            $.ajax({
+                url: "http://localhost:5000/redirect_and_sign_in",
+                method: 'POST',
+                success: function (data, textStatus, jQxhr) {
+                    var url = String(data);
+                    window.open(url, '_blank').focus();
+                },
+                error: function (jqXhr, textStatus, errorThrown) {
+                },
+                timeout: 5000
+            });
+        }
+
+        var IsCredentialsSentToServer = false;
+        // function to check if user signed in before
+        function check_user() {
+            if (!IsCredentialsSentToServer) {
+                if (typeof (Storage) !== "undefined") {
+				  if (localStorage.getItem("key1") && localStorage.getItem("secret")) {
+                        if (Number(localStorage.getItem("firstTime")) === 0) {
+                            IsCredentialsSentToServer = true;
+                            localStorage.setItem("firstTime", Number(localStorage.getItem("firstTime")) + 1);
+                            document.getElementById("mainNodesDiv").style.display = "block";
+                            document.getElementById("loginDiv").style.display = "none";
+                            return;
+                        } else {
+                            var param = [];
+                            param.push(String(localStorage.getItem("key1")));
+                            param.push(String(localStorage.getItem("secret")));
+                            $.ajax({
+                                url: "http://localhost:5000/get_keys_from_client",
+                                method: 'POST',
+                                contentType: 'application/json',
+                                data: JSON.stringify(param),
+                                success: function (data, textStatus, jQxhr) {
+                                    IsCredentialsSentToServer = true;
+                                    document.getElementById("mainNodesDiv").style.display = "block";
+                                    document.getElementById("loginDiv").style.display = "none";
+                                    return;
+                                },
+                                error: function (jqXhr, textStatus, errorThrown) {
+                                },
+                                timeout: 5000
+                            });
+                        }
+                    }
+                }else{
+                    alert("Local Storage is not Supported");
+                }
+            }
+        }
+
+        // Used here to check on the user upon opening the website
+        check_user();
+
+        // Function to retrieve the tweets
+        var tweetsLang = [];
+        function retrieve(param) {
+            tweetsLang.splice(0, tweetsLang.length);
+            $.ajax({
+                url: "http://localhost:5000/retrieve",
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(param),
+                success: function (data, textStatus, jQxhr) {
+                    // Disabling and hidinng the loader
+                    document.getElementById("loader").style.display = "none";
+                    // Enabling the buttons
+                    document.getElementById("delete").disabled = false;
+                    document.getElementById("retrieve").disabled = false;
+                    document.getElementById("predictSentiment").disabled = false;
+                    if (data.length === 0) {
+                        $("#errorMessage").text("No tweets for this user");
+                        document.getElementById("errorMessageDiv").style.visibility = "visible";
+                    } else if (data.length === 1 && data[0] === "Check username or try again") {
+                        $("#errorMessage").text("Check username or try again");
+                        document.getElementById("errorMessageDiv").style.visibility = "visible";
+                    } else {
+                        // showing the first 3 headers
+                        document.getElementById("tweetsHeader").style.display = "table-cell";
+                        document.getElementById("tweetsDateHeader").style.display = "table-cell";
+                        document.getElementById("tweetNumberHeader").style.display = "table-cell";
+                        for (i = 0; i < data.length; i++) {
+                            var dateAndTweet = data[i].split("DateAndTweetSeparatorForProject");
+
+                            var tr = document.createElement("tr");
+                            tr.className = "row";
+
+                            var td1 = document.createElement("td");
+                            td1.className = "number";
+                            var text1 = document.createTextNode(i + 1);
+                            td1.appendChild(text1);
+                            tr.appendChild(td1);
+
+                            var td2 = document.createElement("td");
+                            td2.className = "date";
+                            var text2 = document.createTextNode(dateAndTweet[0]);
+                            td2.appendChild(text2);
+                            tr.appendChild(td2);
+
+                            var td3 = document.createElement("td");
+                            td3.className = "tweet";
+                            var text3 = document.createTextNode(dateAndTweet[1]);
+                            td3.appendChild(text3);
+                            tr.appendChild(td3);
+
+                            table.appendChild(tr);
+
+                            tweetsLang.push(dateAndTweet[2]);
+                        }
+                    }
+                },
+                error: function (jqXhr, textStatus, errorThrown) {
+                    alert("There was an Error");
+                    console.log(errorThrown);
+                }
+            });
+        }
+
+        // Function to predict the tweets sentiment
+        function model_call(input) {
+            $.ajax({
+                url: "http://localhost:5000/predict",
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(input),
+                success: function (data, textStatus, jQxhr) {
+                    // showing the last header
+                    document.getElementById("sentimentsHeader").style.display = "table-cell";
+                    var TotalTr = document.getElementsByClassName("row");
+                    var positive = 0;
+                    var negative = 0;
+                    var neutral = 0;
+                    var position = -1;
+                    for (i = 0; i < TotalTr.length; i++) {
+                        var td = document.createElement("td");
+                        td.className = "sentiment";
+                        var text;
+
+                        if (englishTweetsIndexes.includes(i.toString())) {
+                            position = position + 1;
+                            if (parseFloat(data[position]) > 0.6) {
+                                td.style.color = "green";
+                                text = document.createTextNode("Positive");
+                                positive += 1;
+                            } else if (parseFloat(data[position]) < 0.4) {
+                                td.style.color = "red";
+                                text = document.createTextNode("Negative");
+                                negative += 1;
+                            } else {
+                                text = document.createTextNode("Neutral");
+                                neutral += 1;
+                            }
+                        } else {
+                            text = document.createTextNode("-----------");
+                        }
+                        td.appendChild(text);
+                        TotalTr[i].appendChild(td);
+                    }
+                    // Setting the statistics to the labels then making them visible
+                    $("#positive").text("Statistics: Positive Tweets: " + ((positive / data.length) * 100).toFixed(2) + "%,");
+                    $("#negative").text("Negative Tweets: " + ((negative / data.length) * 100).toFixed(2) + "%,");
+                    $("#neutral").text("Neutral Tweets: " + ((neutral / data.length) * 100).toFixed(2) + "%");
+                    document.getElementById("statistics").style.visibility = "visible";
+                },
+                error: function (jqXhr, textStatus, errorThrown) {
+                    alert("There was an Error");
+                    console.log(errorThrown);
+                },
+                timeout: 5000
+            });
+        }
+
+        //function after signining in and authentication
+        function afterGainingFocus() {
+            check_user();
+        }
+
+        $(document).ready(function () {
+
+            // opening new tab to sign in using twitter
+            $("#loginButton").click(function () {
+                redirectAndSignin();
+            });
+
+
+            // Adding @ character if the user did not type it.
+            $("#username").keyup(function () {
+                var username = $("#username").val();
+                if (username.length !== 0)
+                    if (username.charAt(0) !== "@")
+                        $("#username").val("@" + $("#username").val());
+            });
+
+            // Getting the tweets of the entered username
+            $('#retrieve').click(function () {
+                if ($("#username").val() !== "") {
+                    // Removing all rows related to tweets
+                    $(".row").remove();
+                    // Enabling the loader
+                    document.getElementById("loader").style.display = "block";
+                    // Hiding the statistics
+                    document.getElementById("statistics").style.visibility = "hidden";
+                    // Hiding the error message
+                    document.getElementById("errorMessageDiv").style.visibility = "hidden";
+                    // Hidding the headers
+                    document.getElementById("tweetsHeader").style.display = "none";
+                    document.getElementById("sentimentsHeader").style.display = "none";
+                    document.getElementById("tweetsDateHeader").style.display = "none";
+                    document.getElementById("tweetNumberHeader").style.display = "none";
+                    // Disabling the buttons
+                    document.getElementById("delete").disabled = true;
+                    document.getElementById("retrieve").disabled = true;
+                    document.getElementById("predictSentiment").disabled = true;
+                    // Getting the username and Nbr of tweets then pass them to the fucntion
+                    var param = [];
+                    param.push($("#username").val().substring(1));
+                    var numberOfTeets = $("#numberOfTweets").val().split(" ");
+                    param.push(numberOfTeets[1]);
+                    retrieve(param);
+                }
+            });
+
+            // Sending the Tweets to the model
+            $('#predictSentiment').click(function () {
+                englishTweetsIndexes.splice(0, englishTweetsIndexes.length);
+                // Hiding the sentiment header and removing old results of analysis
+                $(".sentiment").remove();
+                document.getElementById("sentimentsHeader").style.display = "none";
+                document.getElementById("statistics").style.visibility = "hidden";
+                var inputTweets = [];
+                var i = -1;
+                $(".tweet").each(function () {
+                    i = i + 1;
+                    if (tweetsLang[i] === "en") {
+                        var tweetLangCouple = {tweet: $(this).html(), lang: "en"};
+                        inputTweets.push(tweetLangCouple);
+                        englishTweetsIndexes.push(i.toString());
+                    }
+                });
+                if (inputTweets.length !== 0) {
+                    model_call(inputTweets);
+                }
+            });
+
+            // Clearing and hiding all results
+            $("#delete").click(function () {
+                $(".date").remove();
+                $(".tweet").remove();
+                $(".number").remove();
+                $(".sentiment").remove();
+                $("#username").val("");
+                document.getElementById("tweetsHeader").style.display = "none";
+                document.getElementById("sentimentsHeader").style.display = "none";
+                document.getElementById("tweetsDateHeader").style.display = "none";
+                document.getElementById("tweetNumberHeader").style.display = "none";
+                document.getElementById("statistics").style.visibility = "hidden";
+                document.getElementById("errorMessageDiv").style.visibility = "hidden";
+
+            });
+        });
+        </script>
+
+    <body onfocus="afterGainingFocus()">
+        <div class="mainNodes" id="mainNodesDiv">
+            <h1>Tweets Sentiment Analysis</h1>
+            <input type="text" id="username" placeholder="Enter a twitter username" required="required"/><br><br>
+            <label style="font-size: 16px;font-weight: bold;">Select the number of tweets to be retrieved:</label>
+            <select id="numberOfTweets" style="width: 75px;">
+                <option>Top 50</option>
+                <option>Top 100</option>
+                <option>Top 150</option>
+                <option>Top 200</option>
+            </select><br><br>
+            <button id="retrieve" class="customButtons" style="margin-right:22px">Retrieve tweets</button>
+            <button id="predictSentiment" class="customButtons">Predict tweets Sentiment</button>
+            <button id="delete" class="customButtons" style="margin-left:22px">Clear All</button>
+        </div><br>
+        <div class="loader" id="loader"></div>
+        <div id="errorMessageDiv" class="errorMessageDiv">
+            <label id="errorMessage" style="color: red;font-weight: bold"></label>
+        </div>
+        <div id="statistics" class="output">
+            <label id="positive"></label>
+            <label id="negative"></label>
+            <label id="neutral"></label>
+        </div><br>
+        <div class="output">
+            <table id="table" style='width: 100%'>
+                <tr>
+                    <th class="tweetNumberHeader" id="tweetNumberHeader">#</th>
+                    <th class="tweetsDateHeader" id="tweetsDateHeader">Tweeted On</th>
+                    <th class="tweetsHeader" id="tweetsHeader">Tweet</th>
+                    <th class="sentimentsHeader" id="sentimentsHeader">Tweet Sentiment</th>
+                </tr>
+            </table>
+        </div>
+        <div class="login" id="loginDiv">
+            <h1>Tweets Sentiment Analysis</h1>
+            <h4>Please login using your Twitter account to use our services</h4>
+            <button class="loginButton" id="loginButton">Login With Twitter</button>
+        </div>
+    </body>
+</html>
