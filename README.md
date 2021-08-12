@@ -1,4 +1,7 @@
-# Tweets-Sentiment-Flask-App
+# Important note: 
+Make sure to create a new Twitter app on https://developer.twitter.com/ and modify the values of consumer_key and consumer_secret in app.py according to your app.
+
+# Tweets-Sentiments
 This app uses the Tensorflow model (provided) that allows to predict tweets sentiment.
 
 This model should be served with Tensorflow Serving in a docker container.
